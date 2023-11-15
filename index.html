@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300&display=swap"
+      rel="stylesheet"
+    />
+    <title>Bootstrap demo</title>
+
+    <style>
+      body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        background-color: #f2f2f2;
+        color: #34495e;
+        text-align: center;
+      }
+      #inputPanel {
+        background-color: #fafafa;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: inline-block;
+        margin-top: 20px;
+      }
+      .inputField {
+        padding: 5px 10px;
+        border-radius: 5px;
+        border: 1px solid #bdc3c7;
+        margin: 5px;
+      }
+      .actionButton {
+        background-color: #e74c3c;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      canvas {
+        border: 1px solid #2c3e50;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg navbar-dark bg-dark"
+      style="font-family: 'Merriweather', serif"
+    >
+      <div class="container-fluid">
+        <a class="navbar-brand" href="index.html">Mechanism Simulator</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="index.html"
+                >4R Mechanism</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="3R1P-mechanism-simulation.html"
+                >3R1P Mechanism</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      <h2
+        class="text-center text-dark mt-5"
+        style="font-family: 'Merriweather', serif; font-weight: 500"
+      >
+        4R Mechanism Linkage Simulator
+      </h2>
+    </div>
+    <div
+      style="
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 40px;
+      "
+    >
+      <div style="display: flex; flex-direction: column">
+        <div id="inputPanel" style="margin-left: 5rem; margin-right: 5rem; font-family: 'Merriweather', serif;" class="text-dark">
+          <h3 style="font-weight: 500;">How to Simulate</h3>
+          <p>
+            Welcome to the Mechanism Simulator. Explore mechanical
+            linkages by following these steps:
+          </p>
+          <ol>
+            <li class="text-start">
+              Set the lengths for:
+              <ul>
+                <li>
+                  <strong>Fixed Link:</strong> The stationary part of the
+                  mechanism.
+                </li>
+                <li>
+                  <strong>Input Link (Crank):</strong> The link you control.
+                </li>
+                <li>
+                  <strong>Coupler:</strong> The intermediate link between the
+                  input and follower.
+                </li>
+                <li>
+                  <strong>Follower:</strong> The link that follows the motion of
+                  the coupler.
+                </li>
+              </ul>
+            </li>
+            <li class="text-start mt-3">Click "Simulate" to observe the mechanism's motion.</li>
+            <li class="text-start mt-3">
+              Experiment with different lengths to discover unique motion
+              patterns.
+            </li>
+          </ol>
+        </div>
+        <div id="inputPanel" style="margin-right: 5rem; margin-left: 5rem">
+          <h3>Set Link Lengths</h3>
+          Fixed Link: <input type="text" id="Link1" class="inputField" size="1" />;
+          Input Link: <input type="text" id="Link2" class="inputField" size="1" />;
+          Coupler: <input type="text" id="Link3" class="inputField" size="1" />;
+          Follower: <input type="text" id="Link4" class="inputField" size="1" />
+          <button class="actionButton" id="draw">Simulate</button>
+        </div>
+      </div>
+
+      <canvas id="myCanvas" width="500" height="400"></canvas>
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      var { Link1, Link2, Link3, Link4 } = Object.fromEntries(
+        Array.from({ length: 4 }, (_, i) => [
+          `Link${i + 1}`,
+          document.querySelector(`#Link${i + 1}`),
+        ])
+      );
+
+      var simulationCanvas = document.querySelector("#myCanvas");
+      var canvasContext = simulationCanvas.getContext("2d");
+
+      var canvasWidth = simulationCanvas.width;
+      var canvasHeight = simulationCanvas.height;
+
+      var angle = 0;
+      var jointRadius = 4;
+      var requestAnimationFrame =
+        window.requestAnimationFrame ??
+        window.mozRequestAnimationFrame ??
+        window.webkitRequestAnimationFrame ??
+        window.msRequestAnimationFrame;
+
+      function renderFilledCircle(radius, cx, cy, color = "#4d8c52") {
+        canvasContext.beginPath();
+        canvasContext.arc(cx, cy, radius, 0, Math.PI * 2, false);
+        canvasContext.closePath();
+        canvasContext.fillStyle = color;
+        canvasContext.fill();
+      }
+
+      function renderSolidLine(x1, y1, x2, y2, lineWidth = 2, lineDash = [5, 0]) {
+        canvasContext.lineWidth = lineWidth;
+        canvasContext.setLineDash(lineDash);
+        canvasContext.beginPath();
+        canvasContext.moveTo(x1, y1);
+        canvasContext.lineTo(x2, y2);
+        canvasContext.stroke();
+      }
+
+      function animateMechanismSimulation() {
+        canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
+        canvasContext.fillStyle = "#EEEEEE";
+        canvasContext.fillRect(0, 0, canvasWidth, canvasHeight);
+        canvasContext.beginPath();
+
+        var maxLength = Math.max(Link1.value, Link2.value, Link3.value, Link4.value);
+
+        const scDistFactor  = 100 / maxLength;
+        const scaleLink1 = scDistFactor  * Link1.value;
+        const scaleLink2 = scDistFactor  * Link2.value;
+        const scaleLink3 = scDistFactor  * Link3.value;
+        const scaleLink4 = scDistFactor  * Link4.value;
+
+        const rVariable = [scaleLink1, scaleLink2, scaleLink3, scaleLink4].sort((a, b) => b - a);
+        const [longLink, , , shortLink] = rVariable;
+        const otherLinkSum = rVariable[1] + rVariable[2];
+        const LinkSum3 = rVariable.slice(1).reduce((sum, val) => sum + val, 0);
+        let mechanismType, grasofType;
+
+        //
+
+        // /////
+        if (LinkSum3 <= rVariable[0]) {
+          alert("Mechanism con't move");
+        } else {
+          // /
+          if (longLink + shortLink <= otherLinkSum) {
+            mechanismType = 0;
+
+            if (rVariable[3] == scaleLink1 || rVariable[3] == scaleLink2) {
+              grasofType = 0;
+            } else if (rVariable[3] == scaleLink4 || rVariable[3] == scaleLink3) {
+              grasofType = rVariable[3] == scaleLink4 ? 1 : 2;
+
+              var radAng2Max = Math.acos(
+                (scaleLink2 * scaleLink2 + scaleLink1 * scaleLink1 - (scaleLink3 + scaleLink4) * (scaleLink3 + scaleLink4)) /
+                  (2 * scaleLink1 * scaleLink2)
+              );
+              var minAngDis2 = Math.acos(
+                (scaleLink2 * scaleLink2 + scaleLink1 * scaleLink1 - (scaleLink3 - scaleLink4) * (scaleLink3 - scaleLink4)) /
+                  (2 * scaleLink1 * scaleLink2)
+              );
+              var angDiff = radAng2Max - minAngDis2;
+              var startAng = 0;
+              var endAng = 2 * Math.PI;
+              var incAng = 0.01;
+            }
+          }
+
+          //  /
+          else {
+            mechanismType = 1;
+
+            var limAngDis2 = Math.acos(
+              (scaleLink2 * scaleLink2 + scaleLink1 * scaleLink1 - (scaleLink3 - scaleLink4) * (scaleLink3 - scaleLink4)) /
+                (2 * scaleLink1 * scaleLink2)
+            );
+            var limAngDis4 =
+              Math.PI -
+              Math.acos(
+                (scaleLink4 * scaleLink4 + Link1 * scaleLink1 - (scaleLink2 + scaleLink3) * (scaleLink2 + scaleLink3)) /
+                  (2 * scaleLink1 * scaleLink4)
+              );
+            var radAng2Max =
+              rVariable[0] == scaleLink1 || rVariable[0] == scaleLink4 ? -limAngDis2 : 2 * Math.PI - limAngDis2;
+            var minAngDis2 = limAngDis2;
+            var startAng = 0;
+            var endAng = 2 * Math.PI;
+            var incAng = rVariable[0] == scaleLink3 ? 0.01 : -0.01;
+          }
+
+          //  /
+        }
+
+        // Now you can use limAngDis2 and incAng outside the conditional blocks
+
+        //
+
+        var distanceX = 200,
+          distanceY = 200,
+          dis2X = distanceX,
+          dis2Y = distanceY,
+          dis4X = scaleLink1 + distanceX,
+          dis4Y = distanceY,
+          radAng2,
+          a,
+          b,
+          c,
+          radAng4;
+
+        if (mechanismType === 1) {
+          var isNegativeIncre = incAng < 0.0;   //determine the direction of the angular increment 
+          radAng2 = isNegativeIncre
+            ? angle < Math.PI
+              ? (-2 * limAngDis2 * angle) / Math.PI + limAngDis2
+              : (2 * limAngDis2 * (angle - Math.PI)) / Math.PI - limAngDis2
+            : angle < Math.PI
+            ? (2 * angle * (Math.PI - limAngDis2)) / Math.PI + limAngDis2
+            : (2 * (limAngDis2 - Math.PI) * (angle - Math.PI)) / Math.PI +
+              2 * Math.PI -
+              limAngDis2;
+
+          a = Math.sin(radAng2);
+          b = Math.cos(radAng2) - scaleLink1 / scaleLink2;
+          c =
+            (-scaleLink1 / scaleLink4) * Math.cos(radAng2) +
+            (scaleLink1 * scaleLink1 + scaleLink2 * scaleLink2 + scaleLink4 * scaleLink4 - scaleLink3 * scaleLink3) / (2 * scaleLink2 * scaleLink4);
+
+          radAng4 =
+            2 *
+            Math.atan2(
+              isNegativeIncre
+                ? a - Math.sqrt(a * a + b * b - c * c)
+                : a + Math.sqrt(a * a + b * b - c * c),
+              b + c
+            );
+        } else {
+          if (grasofType === 2 || grasofType === 1) {
+            var isLessThanPi = angle < Math.PI;
+            radAng2 = isLessThanPi
+              ? minAngDis2 + (angDiff * angle) / Math.PI
+              : radAng2Max - (angDiff * (angle - Math.PI)) / Math.PI;
+            a = Math.sin(radAng2);
+            b = Math.cos(radAng2) - scaleLink1 / scaleLink2;
+            c =
+              (-scaleLink1 / scaleLink4) * Math.cos(radAng2) +
+              (scaleLink1 * scaleLink1 + scaleLink2 * scaleLink2 + scaleLink4 * scaleLink4 - scaleLink3 * scaleLink3) / (2 * scaleLink2 * scaleLink4);
+            radAng4 =
+              2 *
+              Math.atan2(
+                isLessThanPi
+                  ? a - Math.sqrt(a * a + b * b - c * c)
+                  : a + Math.sqrt(a * a + b * b - c * c),
+                b + c
+              );
+          } else {
+            radAng2 = angle;
+            a = Math.sin(radAng2);
+            b = Math.cos(radAng2) - scaleLink1 / scaleLink2;
+            c =
+              (-scaleLink1 / scaleLink4) * Math.cos(radAng2) +
+              (scaleLink1 * scaleLink1 + scaleLink2 * scaleLink2 + scaleLink4 * scaleLink4 - scaleLink3 * scaleLink3) / (2 * scaleLink2 * scaleLink4);
+            radAng4 = 2 * Math.atan2(a - Math.sqrt(a * a + b * b - c * c), b + c);
+          }
+        }
+
+        //
+        var sinAngleRad2 = Math.sin(radAng2),
+        cosAngleRad2 = Math.cos(radAng2),
+          pointAx = scaleLink2 * cosAngleRad2 + distanceX,
+          pointAy = scaleLink2 * sinAngleRad2 + distanceY,
+          pointBx = dis4X + scaleLink4 * Math.cos(radAng4),
+          pointBy = dis4Y + scaleLink4 * Math.sin(radAng4);
+
+        renderSolidLine(dis2X, dis2Y, pointAx, pointAy);
+        renderSolidLine(dis2X, dis2Y, dis4X, dis4Y);
+        renderSolidLine(dis4X, dis4Y, pointBx, pointBy);
+        renderSolidLine(pointAx, pointAy, pointBx, pointBy);
+        renderFilledCircle(jointRadius, pointAx, pointAy);
+        renderFilledCircle(jointRadius, dis2X, dis2Y);
+        renderFilledCircle(jointRadius, dis4X, dis4Y);
+        renderFilledCircle(jointRadius, pointBx, pointBy);
+
+        canvasContext.closePath();
+        canvasContext.fillStyle = "#4d8c52";
+        canvasContext.fill();
+        angle += Math.PI / 300;
+        if (angle >= 2 * Math.PI) angle = 0;
+        requestAnimationFrame(animateMechanismSimulation);
+
+        //
+      }
+      (function () {
+        document.querySelector("#draw").addEventListener("click", function (e) {
+          e.preventDefault();
+          animateMechanismSimulation();
+          document.querySelector("#draw").disabled = true;
+        });
+      })();
+    </script>
+  </body>
+</html>
